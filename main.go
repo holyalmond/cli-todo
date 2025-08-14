@@ -38,9 +38,7 @@ func main() {
 		showMenu()
 		fmt.Print("> ")
 		choice := readInput(reader)
-
-		clearScreen()
-		showMenu()
+		fmt.Println()
 
 		switch choice {
 		case AddTaskOption:
@@ -75,7 +73,6 @@ func showMenu() {
 	fmt.Println("3) Toggle task status")
 	fmt.Println("4) Delete a task")
 	fmt.Println("5) Exit")
-	fmt.Println()
 }
 
 func addTask(reader *bufio.Reader, tasks *[]Task) {
@@ -97,56 +94,45 @@ func listTasks(tasks []Task) {
 	}
 }
 
-func toggleTask(reader *bufio.Reader, tasks *[]Task) {
-	if len(*tasks) == 0 {
-    	fmt.Println("No tasks to toggle")
-    	return
-	}	
-	listTasks(*tasks)
+func selectTask(reader *bufio.Reader, tasks []Task, action string) (int, bool) {
+	if len(tasks) == 0 {
+		fmt.Printf("No tasks to %s\n", action)
+		return 0, false
+	}
+
+	listTasks(tasks)
 	fmt.Println()
-	fmt.Print("Enter task number: ")
+	fmt.Printf("Enter task number to %s: ", action)
 	taskNumStr:= readInput(reader)
 
 	taskIndex, err := strconv.Atoi(taskNumStr)
-	if err != nil {
+	if err != nil  || taskIndex < 1 || taskIndex > len(tasks){
 		fmt.Println("Invalid number")
+		return 0, false
+	}
+
+	return taskIndex - 1, true
+}
+
+func toggleTask(reader *bufio.Reader, tasks *[]Task) {
+	taskIndex, ok  := selectTask(reader, *tasks, "toggle")
+	if !ok {
 		return
 	}
 
-	if taskIndex < 1 || taskIndex > len(*tasks) {
-    	fmt.Println("No task with that number")
-    	return
-	}
-
-
-	(*tasks)[taskIndex-1].Done = !(*tasks)[taskIndex-1].Done
-	fmt.Printf("%d) %s [%s]\n", taskIndex, (*tasks)[taskIndex-1].Name, (*tasks)[taskIndex-1].Status())
+	(*tasks)[taskIndex].Done = !(*tasks)[taskIndex].Done
+	fmt.Printf("%d) %s [%s]\n", taskIndex+1, (*tasks)[taskIndex].Name, (*tasks)[taskIndex].Status())
 }
 
 func deleteTask(reader *bufio.Reader, tasks *[]Task) {
-	if len(*tasks) == 0 {
-    	fmt.Println("No tasks to delete")
-    	return
-	}	
-	listTasks(*tasks)
-	fmt.Println()
-	fmt.Print("Enter task number: ")
-	taskNumStr:= readInput(reader)
-
-	taskIndex, err := strconv.Atoi(taskNumStr)
-	if err != nil {
-		fmt.Println("Invalid number")
+	taskIndex, ok := selectTask(reader, *tasks, "delete")
+	if !ok {
 		return
 	}
 
-	if taskIndex < 1 || taskIndex > len(*tasks) {
-    	fmt.Println("No task with that number")
-    	return
-	}
+	taskName := (*tasks)[taskIndex].Name
 
-	taskName := (*tasks)[taskIndex-1].Name
-
-	*tasks = append((*tasks)[:taskIndex-1], (*tasks)[taskIndex:]...)
+	*tasks = append((*tasks)[:taskIndex], (*tasks)[taskIndex+1:]...)
 	fmt.Printf("Task \"%s\" deleted\n", taskName)
 }
 
