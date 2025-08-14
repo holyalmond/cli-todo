@@ -12,7 +12,8 @@ const (
 	AddTaskOption = "1"
 	ListTasksOption = "2"
 	ToggleTaskOption = "3"
-	ExitOption = "4"
+	DeleteTaskOption = "4"
+	ExitOption = "5"
 )
 
 type Task struct {
@@ -48,6 +49,8 @@ func main() {
 			listTasks(tasks)
 		case ToggleTaskOption:
 			toggleTask(reader, &tasks)
+		case DeleteTaskOption:
+			deleteTask(reader, &tasks)
 		case ExitOption:
 			fmt.Println("Goodbye!")
 			return
@@ -70,7 +73,8 @@ func showMenu() {
 	fmt.Println("1) Add a task")
 	fmt.Println("2) List all tasks")
 	fmt.Println("3) Toggle task status")
-	fmt.Println("4) Exit")
+	fmt.Println("4) Delete a task")
+	fmt.Println("5) Exit")
 	fmt.Println()
 }
 
@@ -117,6 +121,33 @@ func toggleTask(reader *bufio.Reader, tasks *[]Task) {
 
 	(*tasks)[taskIndex-1].Done = !(*tasks)[taskIndex-1].Done
 	fmt.Printf("%d) %s [%s]\n", taskIndex, (*tasks)[taskIndex-1].Name, (*tasks)[taskIndex-1].Status())
+}
+
+func deleteTask(reader *bufio.Reader, tasks *[]Task) {
+	if len(*tasks) == 0 {
+    	fmt.Println("No tasks to delete")
+    	return
+	}	
+	listTasks(*tasks)
+	fmt.Println()
+	fmt.Print("Enter task number: ")
+	taskNumStr:= readInput(reader)
+
+	taskIndex, err := strconv.Atoi(taskNumStr)
+	if err != nil {
+		fmt.Println("Invalid number")
+		return
+	}
+
+	if taskIndex < 1 || taskIndex > len(*tasks) {
+    	fmt.Println("No task with that number")
+    	return
+	}
+
+	taskName := (*tasks)[taskIndex-1].Name
+
+	*tasks = append((*tasks)[:taskIndex-1], (*tasks)[taskIndex:]...)
+	fmt.Printf("Task \"%s\" deleted\n", taskName)
 }
 
 func clearScreen() {
