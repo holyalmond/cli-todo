@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"github.com/fatih/color"
 )
 
 const (
@@ -18,6 +19,14 @@ const (
 	taskFile         = "tasks.json"
 )
 
+var (
+	green = color.New(color.FgGreen).Add(color.Bold).SprintFunc() 
+	red = color.New(color.FgRed).Add(color.Bold).SprintFunc()
+	yellow = color.New(color.FgYellow).SprintFunc()
+	cyan = color.New(color.FgCyan).SprintFunc()
+	bold = color.New(color.Bold).SprintFunc()
+)
+
 type Task struct {
 	Name string
 	Done bool
@@ -25,9 +34,9 @@ type Task struct {
 
 func (t Task) Status() string {
 	if t.Done {
-		return "Done"
+		return green("Done")
 	}
-	return "Not done"
+	return yellow("Not done")
 }
 
 func main() {
@@ -52,13 +61,13 @@ func main() {
 		case DeleteTaskOption:
 			deleteTask(reader, &tasks)
 		case ExitOption:
-			fmt.Println("Goodbye!")
+			fmt.Println(cyan("Goodbye!"))
 			return
 		default:
-			fmt.Println("Invalid choice")
+			fmt.Println(red("Invalid choice"))
 		}
 
-		fmt.Println("\nPress ENTER to continue...")
+		fmt.Println(bold("\nPress ENTER to continue..."))
 		reader.ReadString('\n')
 	}
 }
@@ -69,12 +78,12 @@ func readInput(reader *bufio.Reader) string {
 }
 
 func showMenu() {
-	fmt.Println("\nTo-Do CLI")
-	fmt.Println("1) Add a task")
-	fmt.Println("2) List all tasks")
-	fmt.Println("3) Toggle task status")
-	fmt.Println("4) Delete a task")
-	fmt.Println("5) Exit")
+	fmt.Println(bold("\nTo-Do CLI"))
+	fmt.Println(cyan("1)") + " Add a task")
+	fmt.Println(cyan("2)") + " List all tasks")
+	fmt.Println(cyan("3)") + " Toggle task status")
+	fmt.Println(cyan("4)") + " Delete a task")
+	fmt.Println(cyan("5)") + " Exit")
 }
 
 func addTask(reader *bufio.Reader, tasks *[]Task) {
@@ -83,23 +92,26 @@ func addTask(reader *bufio.Reader, tasks *[]Task) {
 	task := Task{Name: taskName, Done: false}
 	*tasks = append(*tasks, task)
 	saveTasks(*tasks)
-	fmt.Printf("Task added: %s\n", taskName)
+	fmt.Printf("%s %s\n", green("Task added:"), bold(taskName))
 }
 
 func listTasks(tasks []Task) {
 	if len(tasks) == 0 {
-		fmt.Println("No tasks yet")
+		fmt.Println(red("No tasks yet"))
 		return
 	}
-	fmt.Println("Your tasks:")
+	fmt.Println(cyan("Your tasks:"))
 	for i, t := range tasks {
-		fmt.Printf("%d) %s [%s]\n", i+1, t.Name, t.Status())
+		fmt.Printf("%s %s [%s]\n", 
+			yellow(fmt.Sprintf("%d)", i+1)), 
+			bold(t.Name), 
+			t.Status())
 	}
 }
 
 func selectTask(reader *bufio.Reader, tasks []Task, action string) (int, bool) {
 	if len(tasks) == 0 {
-		fmt.Printf("No tasks to %s\n", action)
+		fmt.Printf("%s\n", red(fmt.Sprintf("No tasks to %s", action)))
 		return 0, false
 	}
 
@@ -110,7 +122,7 @@ func selectTask(reader *bufio.Reader, tasks []Task, action string) (int, bool) {
 
 	taskIndex, err := strconv.Atoi(taskNumStr)
 	if err != nil || taskIndex < 1 || taskIndex > len(tasks) {
-		fmt.Println("Invalid number")
+		fmt.Println(red("Invalid number"))
 		return 0, false
 	}
 
@@ -125,7 +137,11 @@ func toggleTask(reader *bufio.Reader, tasks *[]Task) {
 
 	(*tasks)[taskIndex].Done = !(*tasks)[taskIndex].Done
 	saveTasks(*tasks)
-	fmt.Printf("%d) %s [%s]\n", taskIndex+1, (*tasks)[taskIndex].Name, (*tasks)[taskIndex].Status())
+		fmt.Printf("%s %s [%s]\n",
+		yellow(fmt.Sprintf("%d)", taskIndex+1)),
+		bold((*tasks)[taskIndex].Name),
+		(*tasks)[taskIndex].Status(),
+	)	
 }
 
 func deleteTask(reader *bufio.Reader, tasks *[]Task) {
@@ -138,7 +154,7 @@ func deleteTask(reader *bufio.Reader, tasks *[]Task) {
 
 	*tasks = append((*tasks)[:taskIndex], (*tasks)[taskIndex+1:]...)
 	saveTasks(*tasks)
-	fmt.Printf("Task \"%s\" deleted\n", taskName)
+	fmt.Printf("%s \"%s\" %s\n", red("Task"), bold(taskName), red("deleted"))
 }
 
 func clearScreen() {
